@@ -17,7 +17,8 @@ DEBUG = False
 
 
 def NewChat():
-    st.write("NewChat fn is running")
+    if DEBUG:
+        st.write("NewChat fn is running")
     stss.newChatSwitch = True
     if "messages" in st.session_state:
         del stss["messages"]  # clear old chat messages if any

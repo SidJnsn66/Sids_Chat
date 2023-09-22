@@ -16,6 +16,13 @@ chatModified = False
 DEBUG = False
 
 
+def CheckDBConn():
+    if pingDB() != "Pinged your deployment. You successfully connected to MongoDB!":
+        st.write(
+            "Failed to connect to database.  Your public IP may not be registered with the DB"
+        )
+
+
 def NewChat():
     if DEBUG:
         st.write("NewChat fn is running")
@@ -93,6 +100,8 @@ def ExtractChatData(RetrievedChat):
 
 # NewUserSim()  # TODO:  Take out
 
+# TODO  Test db connection.  On error, suggest that ip address may not be allowed
+
 # Check for valid user id at new session start
 if "messages" not in st.session_state:  # new session
     NewSession = True
@@ -110,6 +119,7 @@ else:
 
 # Test for first time user and init if so
 if getUserState(stss.userID) == None:  # New user
+    CheckDBConn()
     if DEBUG:
         st.write("First-time user detected and is being set up.")
     # set up sess vars first so that 'messages' has the system message
@@ -121,6 +131,7 @@ if getUserState(stss.userID) == None:  # New user
     NewChat()
 else:
     if NewSession:  # new session/startup
+        CheckDBConn()
         if DEBUG:
             st.write("Not new user, but new session detected.")
 
@@ -150,8 +161,9 @@ with st.sidebar:
     # btnNewUserSession = st.button("New Session", on_click=NewSessionSim)
 
     # titlesList = ["Title1", "Title2", "Title3", "Title4", "Title5"]
-    for title in stss.titlesList:
-        title
+    # for title in stss.titlesList:
+    #     title
+    selectedChat = st.sidebar.selectbox("Chat History", stss.titlesList)
 
     # TODO Put message hx here, individually selectable, and in historical order
 

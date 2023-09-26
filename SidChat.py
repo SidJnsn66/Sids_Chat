@@ -3,6 +3,7 @@
 # Must use Python 3.7 or greater bc assumes dictionaries maintain their order
 import streamlit as st
 from streamlit_chat import message
+from streamlit_option_menu import option_menu
 import os
 import openai
 from datetime import datetime as dt
@@ -13,7 +14,10 @@ from ChatDatabase import *
 # Init temp vars
 stss = st.session_state
 chatModified = False
+retrieveLatestChat = False
 DEBUG = False
+if DEBUG:
+    st.write("RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR")
 
 
 def CheckDBConn():
@@ -65,6 +69,8 @@ def initSessVars():
 
 
 def tempSliderChange():
+    if DEBUG:
+        st.write("tempSliderChange is running.")
     update_session_state_by_user(stss.userID, "Temperature", stss.tempSlider)
 
 
@@ -81,6 +87,8 @@ def buildChatDict(messages):  # TODO Rename to APPEND
 
 # only called when messages does not exist and chatDict has been retrieved
 def ExtractChatData(RetrievedChat):
+    if DEBUG:
+        st.write("ExtractChatData is running")
     stss.messages = []
     stss.messages.append(
         SystemMessage(content="You are a helpful assistant.", additional_kwargs={})
@@ -96,6 +104,13 @@ def ExtractChatData(RetrievedChat):
 
     stss.chatTitle = RetrievedChat["ChatTitle"]
     stss.chatID = RetrievedChat["ChatID"]
+
+
+def chat_change():
+    if DEBUG:
+        st.write("chat_change is running")
+    RetrievedChat = get_chat_by_title(stss.userID, stss.chatSelectBox)
+    ExtractChatData(RetrievedChat)
 
 
 # NewUserSim()  # TODO:  Take out
@@ -145,9 +160,10 @@ else:
         if len(docsList) > 0:  # there are one or more chats persisted for this userid
             for doc in docsList:
                 stss.titlesList.append(doc["ChatTitle"])
-            RetrievedChat = get_latest_ChatRecord(stss.userID)
-            # TODO Extract messages from chatDict
-            ExtractChatData(RetrievedChat)
+            retrieveLatestChat = True
+            # RetrievedChat = get_latest_ChatRecord(stss.userID)
+            # # TODO Extract messages from chatDict
+            # ExtractChatData(RetrievedChat)
             stss.newChatSwitch = False
         else:  # no chats to retrieve, so init state vars as needed
             NewChat()
@@ -163,13 +179,19 @@ with st.sidebar:
     # titlesList = ["Title1", "Title2", "Title3", "Title4", "Title5"]
     # for title in stss.titlesList:
     #     title
-    selectedChat = st.sidebar.selectbox("Chat History", stss.titlesList)
+    selectedChat = st.selectbox(
+        "Chat History",
+        index=len(stss.titlesList) - 1,  # default is the most recent chat
+        options=stss.titlesList,
+        on_change=chat_change,
+        key="chatSelectBox",
+    )
 
-    # TODO Put message hx here, individually selectable, and in historical order
+    if retrieveLatestChat:
+        chat_change()  # uses selectedChat to load the latest
 
     # borrowed from https://github.com/dataprofessor/llama2
-    temp = 0.0
-    temp = st.sidebar.slider(
+    st.sidebar.slider(
         "Temperature",
         min_value=0.01,
         max_value=5.0,
@@ -293,3 +315,7 @@ if chatModified:
 #                       weapons.'
 #             }
 #            }
+
+# Notes:
+# Note use of st.selectbox key in the on_change function.  A variable set to the value to the changed
+# selectbox cannot be passed in args() to the on_change function.

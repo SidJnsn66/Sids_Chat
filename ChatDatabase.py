@@ -29,8 +29,10 @@ def pingDB():
 ############################### Persist state
 
 
-def save_newUserState(userID, temperature):
-    return db.ChatState.insert_one({"UserID": userID, "Temperature": temperature})
+def save_newUserState(userID, temperature, def_model):
+    return db.ChatState.insert_one(
+        {"UserID": userID, "Temperature": temperature, "DefModel": def_model}
+    )
 
 
 def getUserState(userID):
@@ -67,7 +69,7 @@ def save_new_chat(userID, chatID, chatTitle, chatContent):
     )
 
 
-# TODO Retrieve latest chat for user
+# TODO NOT USED ANY LONGER??
 def get_latest_ChatRecord(userID):
     return db.chats.find_one({"UserID": userID}, sort=[("_id", 1)])
 
@@ -76,7 +78,7 @@ def get_chat_by_title(userID, title):
     return db.chats.find_one({"ChatTitle": title, "UserID": userID})
 
 
-# Get all Chat Titles and datetime keys for sorting
+# Get all Chat Titles and datetime keys for sorting  TODO NOT USED??
 def get_all_titles(userID):
     return list(
         db.chats.find({"UserID": userID}, {"_id": 0, "ChatID": 1, "ChatTitle": 1})

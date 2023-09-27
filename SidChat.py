@@ -113,6 +113,10 @@ def chat_change():
     ExtractChatData(RetrievedChat)
 
 
+def model_change():
+    update_session_state_by_user(stss.userID, "DefModel", stss.modelSelectBox)
+
+
 # NewUserSim()  # TODO:  Take out
 
 # TODO  Test db connection.  On error, suggest that ip address may not be allowed
@@ -141,7 +145,8 @@ if getUserState(stss.userID) == None:  # New user
     initSessVars()
     # init and persist db persisted vars
     stss["tempSlider"] = 0.0  # initial value of temp slider
-    save_newUserState(stss.userID, stss.tempSlider)
+    stss["modelSelectBox"] = "gpt-3.5-turbo"
+    save_newUserState(stss.userID, stss.tempSlider, stss.modelSelectBox)
     # chatDict, chatTitle, chatID are not persisted till first chat created
     NewChat()
 else:
@@ -153,6 +158,7 @@ else:
         # Retrieve persisted state variables
         getResult = getUserState(stss.userID)  # pull in state
         stss.tempSlider = getResult["Temperature"]
+        stss.modelSelectBox = getResult["DefModel"]
         initSessVars()  # stss.chatDict is init'd here
 
         # Retrieve chat vars for this user, or init if necessary
@@ -187,13 +193,20 @@ with st.sidebar:
         key="chatSelectBox",
     )
 
+    st.selectbox(
+        "Model Select",
+        options=["gpt-3.5-turbo", "gpt-3.5-turbo-16k", "gpt-4", "gpt-4-32k"],
+        on_change=model_change,
+        key="modelSelectBox",
+    )
+
     if retrieveLatestChat:
         chat_change()  # uses selectedChat to load the latest
 
     # borrowed from https://github.com/dataprofessor/llama2
     st.sidebar.slider(
         "Temperature",
-        min_value=0.01,
+        min_value=0.00,
         max_value=5.0,
         step=0.01,
         on_change=tempSliderChange,
@@ -207,7 +220,8 @@ with st.sidebar:
     #     "max_length", min_value=64, max_value=4096, value=512, step=8
     # )
 
-chat = ChatOpenAI(temperature=stss.tempSlider)
+
+chat = ChatOpenAI(temperature=stss.tempSlider, model=stss.modelSelectBox)
 
 if DEBUG:
     st.write("Before prompt is submitted, state looks like this:")
@@ -285,15 +299,6 @@ if chatModified:
         st.write("Number of records modified = " + str(upsertResult.modified_count))
     # chatModified = False
     # NewSession = False
-
-
-# Checklist
-#    make new session work correctly
-#        retrieve state vars, Chat Titles, and latest chat messages
-#    create chat title list on sidebar
-
-# TODO's:
-# all sessions are loaded from db on startup?????
 
 
 # Example:
